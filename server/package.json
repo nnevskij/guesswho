@@ -1,0 +1,23 @@
+{
+  "name": "guesswho-server",
+  "version": "1.0.0",
+  "description": "Backend realtime (Express + Socket.IO) per stanze di gioco con nickname, personaggi e votazioni unanimi",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}
