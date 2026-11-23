@@ -1,26 +1,293 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  /* Fondi: crema per le schermate di gioco, viola pieno per l'ingresso e il conto alla rovescia */
+  --cream: #f6f4ee;
+  --cream-deep: #ebe7dc;
+  --violet: #6a5ae0;
+  --violet-deep: #5446c4;
+  --panel: #ffffff;
+  --ink: #1d1b22;
+  --ink-soft: #5d5a66;
+  --muted-face: #d9d6cd;
+  --muted-edge: #b9b5aa;
+
+  /* Facce dei tasti e relativi "bordi" 3D, sempre una tinta più scura dello stesso colore */
+  --yellow: #fcd95c;
+  --yellow-edge: #d9ad2c;
+  --green: #4fd483;
+  --green-edge: #2fa862;
+  --blue: #3f4ff0;
+  --blue-edge: #2b37c2;
+  --red: #e5625a;
+  --red-edge: #b94740;
+  --teal: #2f8a76;
+  --teal-edge: #216656;
+  --mint: #dfeae3;
+  --mint-edge: #b9d7c8;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
+  --color-violet: var(--violet);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-yellow: var(--yellow);
+  --color-green: var(--green);
+  --color-blue: var(--blue);
+  --color-red: var(--red);
+  --color-teal: var(--teal);
+  --color-mint: var(--mint);
+  --font-sans: var(--font-nunito);
+  --font-display: var(--font-unbounded);
+  --animate-screen-in: screen-in 280ms var(--ease-out) both;
+  --animate-screen-out: screen-out 180ms ease-in both;
+  --animate-pop: pop 420ms var(--ease-pop) both;
+  --animate-blink: blink 1s steps(1) infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ---------- Base ---------- */
+
+html {
+  background: var(--cream);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 300ms ease;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-nunito), system-ui, sans-serif;
+  caret-color: var(--violet);
+}
+
+::selection {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--violet);
+  outline-offset: 3px;
+}
+
+* {
+  scrollbar-width: thin;
+}
+
+/* Titoli larghi e pesanti, come le insegne di un gioco da tavolo */
+.font-display {
+  font-family: var(--font-unbounded), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Numeri grandi con l'ombra gialla sfalsata (codice stanza, conto alla rovescia) */
+.shadow-text {
+  text-shadow: 0.05em 0.06em 0 var(--shadow-text, var(--yellow));
+}
+
+/* ---------- Tasto giocattolo ---------- */
+
+.toy-btn {
+  --face: var(--yellow);
+  --edge: var(--yellow-edge);
+  --label: var(--ink);
+  --depth: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  border-radius: 22px;
+  background: var(--face);
+  color: var(--label);
+  /* Bordo 3D della stessa tinta + un filo di luce in alto sulla faccia */
+  box-shadow:
+    0 var(--depth) 0 var(--edge),
+    inset 0 2px 0 rgb(255 255 255 / 0.28);
+  margin-bottom: var(--depth);
+  transform: translateY(0);
+  transition:
+    transform 90ms var(--ease-out),
+    box-shadow 90ms var(--ease-out),
+    background-color 150ms ease;
+  touch-action: manipulation;
+  user-select: none;
+  cursor: pointer;
+}
+.toy-btn[data-size="lg"] {
+  min-height: 4rem;
+  padding: 0.9rem 1.25rem;
+  font-size: 1.05rem;
+}
+.toy-btn[data-size="md"] {
+  --depth: 5px;
+  min-height: 3.25rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 18px;
+}
+.toy-btn[data-size="sm"] {
+  --depth: 4px;
+  width: auto;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+}
+
+@media (hover: hover) {
+  .toy-btn:not(:disabled):hover {
+    filter: brightness(1.05);
+  }
+}
+
+.toy-btn:not(:disabled):active,
+.toy-btn[aria-pressed="true"] {
+  transform: translateY(var(--depth));
+  box-shadow:
+    0 0 0 var(--edge),
+    inset 0 2px 0 rgb(255 255 255 / 0.18);
+}
+.toy-btn[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--face) 82%, var(--edge));
+}
+/* !important: le variabili del tono arrivano inline dal componente e vanno scavalcate */
+.toy-btn:disabled {
+  --face: var(--muted-face) !important;
+  --edge: var(--muted-edge) !important;
+  --label: var(--ink-soft) !important;
+  cursor: not-allowed;
+}
+
+/* Tasto piatto e morbido, per le azioni secondarie ("Unisciti al gruppo") */
+.soft-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: var(--soft-bg, rgb(29 27 34 / 0.07));
+  color: var(--soft-ink, var(--ink));
+  font-weight: 800;
+  transition:
+    transform 120ms var(--ease-out),
+    background-color 150ms ease;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.soft-btn:active {
+  transform: scale(0.96);
+}
+.soft-btn[data-armed="true"] {
+  --soft-bg: var(--red);
+  --soft-ink: #fff;
+}
+
+/* ---------- Campi di testo ---------- */
+
+.toy-input {
+  width: 100%;
+  min-height: 3.4rem;
+  padding: 0.75rem 1.1rem;
+  border: 2.5px solid transparent;
+  border-radius: 18px;
+  background: var(--cream-deep);
+  color: var(--ink);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+.toy-input::placeholder {
+  color: #85818c;
+  font-weight: 600;
+}
+.toy-input:focus {
+  outline: none;
+  border-color: var(--violet);
+  background: var(--panel);
+}
+
+/* ---------- Superfici ---------- */
+
+.card {
+  border-radius: 30px;
+  background: var(--panel);
+  box-shadow: 0 2px 0 rgb(29 27 34 / 0.04);
+}
+
+/* Pastiglia scura dei punteggi: "+26", "#2", "Pronto" */
+.pill-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  background: rgb(29 27 34 / 0.82);
+  color: #fff;
+  font-family: var(--font-unbounded), system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Barra dei comandi che galleggia in basso, come una tab bar */
+.dock {
+  border-radius: 32px;
+  background: rgb(255 255 255 / 0.78);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    0 0 0 1.5px rgb(255 255 255 / 0.9) inset,
+    0 14px 40px -12px rgb(29 27 34 / 0.28);
+}
+
+/* ---------- Animazioni ---------- */
+
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes screen-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes pop {
+  0% { opacity: 0; transform: scale(0.84) translateY(12px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+@keyframes bump {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.bump {
+  animation: bump 320ms var(--ease-pop);
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-6px) rotate(var(--r, 0deg)); }
+}
+.float {
+  animation: float 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toy-btn,
+  .soft-btn { transition: none; }
+  .bump,
+  .float { animation: none; }
 }
