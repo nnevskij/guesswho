@@ -194,6 +194,10 @@ export default function Home() {
                   <p className="mt-1 text-base font-bold text-white/85">
                     Ognuno scrive un personaggio segreto, poi tutti premono pronto.
                   </p>
+                  <Link href="/regole/guesswho" className="mt-2 inline-flex items-center gap-1 text-base font-extrabold underline underline-offset-4">
+                    Regole complete
+                    <Icon name="next" size={18} strokeWidth={3} />
+                  </Link>
                 </div>
                 <Button tone="yellow" onClick={create}>
                   <Icon name="plus" size={24} strokeWidth={3.4} />

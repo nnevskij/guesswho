@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "../components/button";
 import { CODE_LENGTH, CodeEntry, cleanCode } from "../components/CodeEntry";
@@ -184,6 +185,10 @@ export default function FunnyStories() {
                   <p className="mt-1 text-base font-bold text-white/90">
                     Rispondi alla domanda senza vedere cosa c&apos;è già scritto, poi passa il foglio. Alla fine chi ha aperto la stanza legge le storie.
                   </p>
+                  <Link href="/regole/funnystories" className="mt-2 inline-flex items-center gap-1 text-base font-extrabold underline underline-offset-4">
+                    Regole complete
+                    <Icon name="next" size={18} strokeWidth={3} />
+                  </Link>
                 </div>
                 <Button tone="yellow" onClick={create}>
                   <Icon name="plus" size={24} strokeWidth={3.4} />

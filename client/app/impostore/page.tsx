@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "../components/button";
 import { CODE_LENGTH, CodeEntry, cleanCode } from "../components/CodeEntry";
@@ -170,6 +171,10 @@ export default function Impostore() {
                   <p className="mt-1 text-base font-bold text-white/90">
                     Tutti hanno la stessa parola segreta, tranne l&apos;impostore. A turno dite un indizio a voce, poi votate sul telefono chi vi sembra fuori posto.
                   </p>
+                  <Link href="/regole/impostore" className="mt-2 inline-flex items-center gap-1 text-base font-extrabold underline underline-offset-4">
+                    Regole complete
+                    <Icon name="next" size={18} strokeWidth={3} />
+                  </Link>
                 </div>
                 <Button tone="yellow" onClick={create}>
                   <Icon name="plus" size={24} strokeWidth={3.4} />

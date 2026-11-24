@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
-import { shareMetadata } from "../lib/meta";
+import { pageMetadata } from "../lib/meta";
+import { rulesFor } from "../regole/content";
 import { GameProvider } from "./GameProvider";
 
-export const metadata: Metadata = {
-  title: "Guess Who",
-  description: "Entra nella stanza, scegli un personaggio, premi pronto.",
-  ...shareMetadata("Guess Who · Giochi Loschi", "Ti hanno invitato a Guess Who: scegli un personaggio segreto e indovina chi ha scelto cosa."),
-};
+const rules = rulesFor("guesswho")!;
+
+export const metadata: Metadata = pageMetadata({
+  path: "/guesswho",
+  title: rules.playTitle,
+  description: rules.playDescription,
+  shareTitle: "Guess Who · Giochi Loschi",
+  shareDescription: "Ti hanno invitato a Guess Who: scegli un personaggio segreto e indovina chi ha scelto cosa.",
+});
 
 // La connessione al server si apre solo dentro questo gioco, non nel catalogo.
 // Suspense serve alla pagina per leggere ?code= dal link di invito.
