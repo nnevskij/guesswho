@@ -23,6 +23,9 @@ export function loadConfig(env = process.env) {
     roomCodeLength: Math.max(4, int(env.ROOM_CODE_LENGTH, 5)),
     nicknameMaxLength: 24,
     characterMaxLength: 60,
+    // Nomi falsi mescolati a quelli veri per rendere il gioco più difficile (l'host sceglie da 0 a maxDecoys).
+    defaultDecoys: Math.min(3, int(env.DEFAULT_DECOYS, 2)),
+    maxDecoys: 3,
     // Lista personaggi: conto alla rovescia prima di mostrarla, poi resta visibile per questo tempo.
     revealCountdownMs: int(env.REVEAL_COUNTDOWN_MS, 5_000),
     revealDurationMs: int(env.REVEAL_DURATION_MS, 30_000),

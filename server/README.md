@@ -39,6 +39,10 @@ lobby ──(tutti "sono pronto", almeno MIN_PLAYERS)──▶ playing
 - Se un giocatore esce o viene rimosso, l'unanimità viene ricontrollata (chi resta non rimane bloccato).
 - A partita iniziata non può entrare nessuno di nuovo, ma chi era già dentro può riconnettersi.
 
+## Nomi falsi
+
+Per rendere il gioco più difficile, alla partenza alla lista si aggiungono dei nomi falsi (da 0 a 3, default 2, li sceglie l'host in lobby; default configurabile con `DEFAULT_DECOYS`). Ogni giocatore può scrivere un nome falso facoltativo nel profilo: il server ne estrae a caso quanti ne servono e, se non bastano, completa con l'elenco di riserva in `src/decoys.js`. Scarta i doppioni e i nomi uguali a un personaggio vero. I falsi vengono mescolati con gli altri e non vengono mai rivelati.
+
 ## Riconnessione
 
 Alla creazione o all'ingresso il server restituisce un `token` segreto. Il client lo salva in `localStorage` e lo passa in `auth` ad ogni connessione. Il server riaggancia la sessione da solo ed emette `session:resumed`. Un giocatore disconnesso resta nella stanza per `DISCONNECT_GRACE_MS` (default 5 min, così un telefono in standby non perde la partita), poi viene rimosso. Se l'host cade, il ruolo passa a un altro giocatore connesso.
@@ -52,7 +56,8 @@ Client → server. Ogni evento ha un ack con `{ ok: true, ... }` oppure `{ ok: f
 | `room:create` | – | `{ roomCode, token, me, state }` |
 | `room:join` | `{ code }` | `{ roomCode, token, me, state }` |
 | `room:leave` | – | |
-| `player:profile` | `{ nickname, character }` | `{ me }` |
+| `player:profile` | `{ nickname, character, decoy? }` (`decoy` = nome falso facoltativo) | `{ me }` |
+| `room:decoys` | `{ count: 0..3 }` (solo host, in lobby) | |
 | `player:ready` | `{ ready: boolean }` | |
 | `game:reread` | `{ vote: boolean }` | |
 | `game:reset` | – (solo host) | |
@@ -62,7 +67,7 @@ Server → client:
 
 | Evento | Payload |
 |---|---|
-| `room:state` | `{ code, phase, hostId, players[{id, nickname, hasCharacter, ready, rereadVote, connected}], readyCount, rereadCount, charactersCount, rereadRound, minPlayers, maxPlayers }` |
+| `room:state` | `{ code, phase, hostId, players[{id, nickname, hasCharacter, ready, rereadVote, connected}], readyCount, rereadCount, charactersCount, decoyCount, maxDecoys, rereadRound, minPlayers, maxPlayers }` |
 | `characters:show` | `{ reason: 'start' \| 'reread', round, characters: string[], countdownMs, durationMs }`: conto alla rovescia di `countdownMs`, poi lista visibile per `durationMs` |
 | `session:resumed` | `{ roomCode, token, me, state }` |
 | `session:invalid` / `session:replaced` | – |

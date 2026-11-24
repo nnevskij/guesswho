@@ -25,7 +25,8 @@ export const sessionPayload = (manager, room, player) => ({
  *   room:create                         -> { roomCode, token, me, state }
  *   room:join     { code }              -> { roomCode, token, me, state }
  *   room:leave
- *   player:profile { nickname, character } -> { me }
+ *   player:profile { nickname, character, decoy? } -> { me }   (decoy = nome falso facoltativo)
+ *   room:decoys   { count: 0..3 }         (solo host, in lobby: quanti nomi falsi aggiungere)
  *   player:ready  { ready: boolean }
  *   game:reread   { vote: boolean }
  *   game:reset                            (solo host: torna in lobby)
@@ -120,7 +121,8 @@ export function registerHandlers(io, manager, config) {
     });
 
     on('player:profile', (data) => ({ me: manager.setProfile(socket.data.token, data) }));
-    on('player:ready', ({ ready = true }) => void manager.setReady(socket.data.token, ready));
+    on('room:decoys', ({ count }) => void manager.setDecoys(socket.data.token, count));
+    on('player:ready',({ ready = true }) => void manager.setReady(socket.data.token, ready));
     on('game:reread', ({ vote = true }) => void manager.voteReread(socket.data.token, vote));
     on('game:reset', () => void manager.resetGame(socket.data.token));
     on('player:kick', ({ playerId }) => void manager.kick(socket.data.token, playerId));

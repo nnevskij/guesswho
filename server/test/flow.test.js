@@ -46,11 +46,21 @@ test('flusso completo: crea, entra, profilo, pronto, rileggi, riconnessione', as
   const notReady = await call(a, 'player:ready', { ready: true });
   assert.equal(notReady.error.code, 'PROFILE_INCOMPLETE');
 
-  await call(a, 'player:profile', { nickname: 'Anna', character: 'Napoleone' });
+  // nomi falsi: 2 di default, li cambia solo l'host, tra 0 e 3
+  assert.equal(created.state.decoyCount, 2);
+  assert.equal((await call(b, 'room:decoys', { count: 1 })).error.code, 'NOT_HOST');
+  assert.equal((await call(a, 'room:decoys', { count: 4 })).error.code, 'INVALID_INPUT');
+  assert.equal((await call(a, 'room:decoys', { count: 3 })).ok, true);
+
+  const sameAsMine = await call(a, 'player:profile', { nickname: 'Anna', character: 'Napoleone', decoy: 'napoleone' });
+  assert.equal(sameAsMine.error.code, 'INVALID_INPUT');
+  const profA = await call(a, 'player:profile', { nickname: 'Anna', character: 'Napoleone', decoy: 'Garibaldi' });
+  assert.equal(profA.me.decoy, 'Garibaldi');
   const dup = await call(b, 'player:profile', { nickname: 'anna', character: 'X' });
   assert.equal(dup.error.code, 'NICKNAME_TAKEN');
-  await call(b, 'player:profile', { nickname: 'Bruno', character: 'Topolino' });
-  await call(c, 'player:profile', { nickname: '  Carla  ', character: 'Cleopatra' });
+  // il falso di Bruno coincide con il personaggio vero di Carla: va scartato
+  await call(b, 'player:profile', { nickname: 'Bruno', character: 'Topolino', decoy: 'cleopatra' });
+  await call(c, 'player:profile', { nickname: '  Carla  ', character: 'Cleopatra', decoy: '' });
 
   // reread non permesso in lobby
   assert.equal((await call(a, 'game:reread', { vote: true })).error.code, 'NOT_PLAYING');
@@ -64,8 +74,13 @@ test('flusso completo: crea, entra, profilo, pronto, rileggi, riconnessione', as
   assert.equal(showA.reason, 'start');
   assert.equal(showA.countdownMs, 5000);
   assert.equal(showA.durationMs, 30000);
-  assert.deepEqual([...showA.characters].sort(), ['Cleopatra', 'Napoleone', 'Topolino']);
+  // 3 veri + 3 falsi: Garibaldi (scritto da Anna) + 2 di riserva, niente doppioni
+  assert.equal(showA.characters.length, 6);
+  for (const name of ['Cleopatra', 'Napoleone', 'Topolino', 'Garibaldi']) assert.ok(showA.characters.includes(name), name);
+  const keys = showA.characters.map((n) => n.toLowerCase());
+  assert.equal(new Set(keys).size, keys.length);
   assert.deepEqual(showA.characters, showB.characters);
+  assert.equal((await call(a, 'room:decoys', { count: 0 })).error.code, 'GAME_IN_PROGRESS');
 
   // nuovi giocatori non possono entrare a partita iniziata
   const late = client();
@@ -135,6 +150,7 @@ test('chi se ne va sblocca il "sono pronto" degli altri', async () => {
   const { roomCode } = await call(a, 'room:create');
   await call(b, 'room:join', { code: roomCode });
   await call(c, 'room:join', { code: roomCode });
+  await call(a, 'room:decoys', { count: 0 });
   await call(a, 'player:profile', { nickname: 'A', character: 'Zorro' });
   await call(b, 'player:profile', { nickname: 'B', character: 'Batman' });
   await call(a, 'player:ready', { ready: true });

@@ -1,4 +1,5 @@
 import { randomBytes, randomInt, randomUUID } from 'node:crypto';
+import { FALLBACK_DECOYS } from './decoys.js';
 import { GameError, cleanText } from './errors.js';
 
 // Niente caratteri ambigui (0/O, 1/I/L) per codici facili da dettare a voce.
@@ -15,13 +16,17 @@ const shuffle = (arr) => {
 };
 
 const noop = () => {};
+const key = (name) => name.toLocaleLowerCase('it');
 
 /**
  * Tutto lo stato di gioco, in memoria. Nessuna dipendenza da Socket.IO:
  * le notifiche escono tramite gli hook passati al costruttore.
  *
- * Room   { code, phase, hostId, players: Map<id, Player>, characters: [{playerId, name}], rereadRound, createdAt }
- * Player { id, token, nickname, character, ready, rereadVote, connected, socketId, removalTimer }
+ * Room   { code, phase, hostId, players: Map<id, Player>, characters: [{playerId, name}], decoyCount, rereadRound, createdAt }
+ * Player { id, token, nickname, character, decoy, ready, rereadVote, connected, socketId, removalTimer }
+ *
+ * I nomi falsi stanno in `characters` con `playerId: null`: nessuno, server compreso, li distingue
+ * più da quelli veri una volta mescolati, e non vengono mai rivelati.
  *
  * `id` è pubblico (lo vedono tutti), `token` è segreto e serve solo al giocatore per riconnettersi.
  */
@@ -71,6 +76,7 @@ export class RoomManager {
       hostId: null,
       players: new Map(),
       characters: [],
+      decoyCount: this.#opts.defaultDecoys,
       rereadRound: 0,
       createdAt: Date.now(),
     };
@@ -116,6 +122,7 @@ export class RoomManager {
       token: randomUUID(),
       nickname: null,
       character: null,
+      decoy: null,
       ready: false,
       rereadVote: false,
       connected: true,
@@ -194,22 +201,44 @@ export class RoomManager {
 
   // ---------- Azioni di gioco ----------
 
-  setProfile(token, { nickname, character } = {}) {
+  setProfile(token, { nickname, character, decoy } = {}) {
     const { room, player } = this.#requireSession(token);
     if (room.phase !== PHASE.LOBBY) throw new GameError('GAME_IN_PROGRESS', 'Non puoi cambiare profilo a partita iniziata');
     const nick = cleanText(nickname, { field: 'nickname', max: this.#opts.nicknameMaxLength });
     const char = cleanText(character, { field: 'personaggio', max: this.#opts.characterMaxLength });
-    const lower = nick.toLocaleLowerCase('it');
+    // Il nome falso è facoltativo: vuoto o assente = nessuno.
+    const fake =
+      decoy == null || (typeof decoy === 'string' && !decoy.trim())
+        ? null
+        : cleanText(decoy, { field: 'nome falso', max: this.#opts.characterMaxLength });
+    if (fake && key(fake) === key(char)) {
+      throw new GameError('INVALID_INPUT', 'Il nome falso deve essere diverso dal tuo personaggio');
+    }
+    const lower = key(nick);
     for (const p of room.players.values()) {
-      if (p.id !== player.id && p.nickname?.toLocaleLowerCase('it') === lower) {
+      if (p.id !== player.id && p.nickname && key(p.nickname) === lower) {
         throw new GameError('NICKNAME_TAKEN', 'Nickname già usato in questa stanza');
       }
     }
     player.nickname = nick;
     player.character = char;
+    player.decoy = fake;
     player.ready = false; // modificare il profilo annulla il "sono pronto"
     this.#commit(room);
     return this.selfView(player);
+  }
+
+  /** Quanti nomi falsi aggiungere alla lista (solo host, in lobby). */
+  setDecoys(token, count) {
+    const { room, player } = this.#requireSession(token);
+    this.#requireHost(room, player);
+    if (room.phase !== PHASE.LOBBY) throw new GameError('GAME_IN_PROGRESS', 'La partita è già iniziata');
+    const n = Number(count);
+    if (!Number.isInteger(n) || n < 0 || n > this.#opts.maxDecoys) {
+      throw new GameError('INVALID_INPUT', `I nomi falsi vanno da 0 a ${this.#opts.maxDecoys}`);
+    }
+    room.decoyCount = n;
+    this.#commit(room);
   }
 
   setReady(token, ready) {
@@ -266,7 +295,9 @@ export class RoomManager {
     if (room.phase === PHASE.LOBBY) {
       if (players.length >= this.#opts.minPlayers && players.every((p) => p.ready)) {
         room.phase = PHASE.PLAYING;
-        room.characters = shuffle(players.map((p) => ({ playerId: p.id, name: p.character })));
+        const real = players.map((p) => ({ playerId: p.id, name: p.character }));
+        const fakes = this.#pickDecoys(room.decoyCount, players).map((name) => ({ playerId: null, name }));
+        room.characters = shuffle([...real, ...fakes]);
         room.rereadRound = 0;
         for (const p of players) p.rereadVote = false;
         show = 'start';
@@ -288,6 +319,24 @@ export class RoomManager {
         durationMs: this.#opts.revealDurationMs,
       });
     }
+  }
+
+  /**
+   * Prima i nomi falsi scritti dai giocatori (estratti a caso), poi, se non bastano, quelli di riserva.
+   * Scarta i doppioni e qualunque nome uguale a un personaggio vero.
+   */
+  #pickDecoys(count, players) {
+    if (count <= 0) return [];
+    const taken = new Set(players.map((p) => key(p.character)));
+    const picked = [];
+    const take = (name) => {
+      if (picked.length >= count || taken.has(key(name))) return;
+      taken.add(key(name));
+      picked.push(name);
+    };
+    for (const name of shuffle(players.map((p) => p.decoy).filter(Boolean))) take(name);
+    for (const name of shuffle([...FALLBACK_DECOYS])) take(name);
+    return picked;
   }
 
   // L'ordine è mescolato una volta sola all'inizio, così le riletture mostrano la stessa lista.
@@ -315,12 +364,14 @@ export class RoomManager {
       readyCount: players.filter((p) => p.ready).length,
       rereadCount: players.filter((p) => p.rereadVote).length,
       charactersCount: room.characters.length,
+      decoyCount: room.decoyCount,
+      maxDecoys: this.#opts.maxDecoys,
       rereadRound: room.rereadRound,
     };
   }
 
   selfView(player) {
-    return { playerId: player.id, nickname: player.nickname, character: player.character };
+    return { playerId: player.id, nickname: player.nickname, character: player.character, decoy: player.decoy };
   }
 
   // ---------- Manutenzione ----------
