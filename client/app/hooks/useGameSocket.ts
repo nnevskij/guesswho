@@ -38,12 +38,17 @@ export interface RoomState {
   readyCount: number;
   rereadCount: number;
   charactersCount: number;
+  /** Nomi falsi aggiunti alla lista alla partenza (li sceglie l'host). */
+  decoyCount: number;
+  maxDecoys: number;
   rereadRound: number;
 }
 export interface Me {
   playerId: string;
   nickname: string | null;
   character: string | null;
+  /** Nome falso facoltativo proposto dal giocatore. */
+  decoy: string | null;
 }
 export interface CharactersShow {
   reason: 'start' | 'reread';
@@ -174,11 +179,12 @@ export function useGameSocket() {
       setRoom(null);
       setMe(null);
     },
-    setProfile: async (nickname: string, character: string) => {
-      const res = await emit<{ me: Me }>('player:profile', { nickname, character });
+    setProfile: async (nickname: string, character: string, decoy: string) => {
+      const res = await emit<{ me: Me }>('player:profile', { nickname, character, decoy });
       if (res.ok) setMe(res.me);
       return res;
     },
+    setDecoys: (count: number) => emit('room:decoys', { count }),
     setReady: (ready: boolean) => emit('player:ready', { ready }),
     voteReread: (vote: boolean) => emit('game:reread', { vote }),
     resetGame: () => emit('game:reset'),

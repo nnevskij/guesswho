@@ -9,7 +9,18 @@ import { playerColor } from "./Toy";
  * 1. conto alla rovescia su viola pieno (5 s di default);
  * 2. lista dei personaggi su crema, visibile per un tempo fisso (30 s di default), poi si chiude da sola.
  */
-export function RevealOverlay({ show, className, onDone }: { show: CharactersShow; className: string; onDone: () => void }) {
+export function RevealOverlay({
+  show,
+  decoys = 0,
+  className,
+  onDone,
+}: {
+  show: CharactersShow;
+  /** Quanti nomi falsi sono mescolati nella lista (mai quali). */
+  decoys?: number;
+  className: string;
+  onDone: () => void;
+}) {
   const { countdownMs, durationMs, receivedAt } = show;
   const [now, setNow] = useState(() => Date.now());
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -82,7 +93,9 @@ export function RevealOverlay({ show, className, onDone }: { show: CharactersSho
             <h2 id="reveal-title" className="font-display mt-1 text-[2rem] font-black leading-none">
               {title}
             </h2>
-            <p className="mt-2 text-base font-bold text-ink-soft">Mescolati e senza autore.</p>
+            <p className="mt-2 text-base font-bold text-ink-soft">
+              {decoys > 0 ? `Mescolati, senza autore e con ${decoys} ${decoys === 1 ? "falso" : "falsi"}.` : "Mescolati e senza autore."}
+            </p>
           </div>
 
           <ul className="flex flex-1 flex-col gap-3.5">

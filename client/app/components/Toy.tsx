@@ -51,14 +51,14 @@ export function Avatar({ name, index, size = 48, ring }: { name: string | null; 
 }
 
 /** Gettoni sovrapposti dei giocatori presenti. */
-export function AvatarStack({ players, max = 5 }: { players: PublicPlayer[]; max?: number }) {
+export function AvatarStack({ players, max = 5, ring = "var(--cream)" }: { players: PublicPlayer[]; max?: number; ring?: string }) {
   const shown = players.slice(0, max);
   const extra = players.length - shown.length;
   return (
     <div className="flex items-center" aria-label={`${players.length} giocatori nella stanza`} role="img">
       {shown.map((p, i) => (
         <span key={p.id} className="-ml-3 first:ml-0" style={{ zIndex: max - i, opacity: p.connected ? 1 : 0.5 }}>
-          <Avatar name={p.nickname} index={i} size={46} ring="var(--cream)" />
+          <Avatar name={p.nickname} index={i} size={46} ring={ring} />
         </span>
       ))}
       {extra > 0 && (

@@ -7,7 +7,7 @@ import { Icon } from "./components/Icon";
 import { MysteryField } from "./components/MysteryField";
 import { PlayerList } from "./components/PlayerList";
 import { RevealOverlay } from "./components/RevealOverlay";
-import { Alert, Avatar, AvatarStack, Card, ConfirmButton, IconButton, MuteButton, VoteDots } from "./components/Toy";
+import { Alert, Avatar, AvatarStack, Card, ConfirmButton, IconButton, MuteButton, SoftButton, VoteDots } from "./components/Toy";
 import { buzz, sfx } from "./lib/feedback";
 
 const SCREEN_MS = 200;
@@ -71,6 +71,7 @@ export default function Home() {
   const [code, setCode] = useState("");
   const [nickname, setNickname] = useState("");
   const [char, setChar] = useState("");
+  const [decoy, setDecoy] = useState("");
   const [editing, setEditing] = useState(false);
   const [showChar, setShowChar] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +108,12 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [flash]);
 
-  const screenId = !g.connected ? "connect" : !g.room ? "home" : g.room.phase;
+  // Chi entra in una stanza altrui passa prima dall'iscrizione; l'host resta in lobby per dettare il codice.
+  // Modificare il profilo riapre l'iscrizione per tutti.
+  const needsSignup = Boolean(
+    g.room?.phase === "lobby" && (editing || (!(g.me?.nickname && g.me?.character) && !g.isHost)),
+  );
+  const screenId = !g.connected ? "connect" : !g.room ? "home" : needsSignup ? "signup" : g.room.phase;
   const screenData = useMemo(
     () => ({ notice: g.notice, error, room: g.room, me: g.me, isHost: g.isHost }),
     [g.notice, error, g.room, g.me, g.isHost],
@@ -122,7 +128,7 @@ export default function Home() {
   const showForm = !profileDone || editing;
 
   // Ingresso su viola pieno, partita su crema. Anche lo sfondo della pagina segue (rimbalzo dello scroll su iOS).
-  const violet = frame.id === "connect" || frame.id === "home";
+  const violet = frame.id === "connect" || frame.id === "home" || frame.id === "signup";
   useEffect(() => {
     document.documentElement.style.backgroundColor = violet ? "var(--violet)" : "var(--cream)";
   }, [violet]);
@@ -145,7 +151,7 @@ export default function Home() {
 
   const saveProfile = async (e: FormEvent) => {
     e.preventDefault();
-    if (await run(g.setProfile(nickname, char))) {
+    if (await run(g.setProfile(nickname, char, decoy))) {
       setEditing(false);
       setShowChar(false);
     }
@@ -154,10 +160,43 @@ export default function Home() {
   const startEdit = () => {
     setNickname(me?.nickname ?? "");
     setChar(me?.character ?? "");
+    setDecoy(me?.decoy ?? "");
     setEditing(true);
   };
 
-  const join = () => code.length === CODE_LENGTH && run(g.joinRoom(code));
+  // Uscendo o cambiando stanza si riparte da un profilo vuoto.
+  const resetProfileForm = () => {
+    setEditing(false);
+    setShowChar(false);
+    setNickname("");
+    setChar("");
+    setDecoy("");
+  };
+  const join = async () => {
+    if (code.length !== CODE_LENGTH) return;
+    resetProfileForm();
+    await run(g.joinRoom(code));
+  };
+  const create = async () => {
+    resetProfileForm();
+    await run(g.createRoom());
+  };
+  const leave = () => {
+    resetProfileForm();
+    void g.leaveRoom();
+  };
+
+  const profileFields = (
+    <ProfileFields
+      nickname={nickname}
+      character={char}
+      decoy={decoy}
+      onNickname={setNickname}
+      onCharacter={setChar}
+      onDecoy={setDecoy}
+      decoyCount={room?.decoyCount ?? 0}
+    />
+  );
 
   return (
     <div className="min-h-dvh transition-colors duration-300" style={{ background: violet ? "var(--violet)" : "var(--cream)" }}>
@@ -216,11 +255,66 @@ export default function Home() {
                     Ognuno scrive un personaggio segreto, poi tutti premono pronto.
                   </p>
                 </div>
-                <Button tone="yellow" onClick={() => run(g.createRoom())}>
+                <Button tone="yellow" onClick={create}>
                   <Icon name="plus" size={24} strokeWidth={3.4} />
                   Crea stanza
                 </Button>
               </div>
+            </>
+          )}
+
+          {/* ---------- ISCRIZIONE ---------- */}
+          {room && frame.id === "signup" && (
+            <>
+              <header className="grid grid-cols-[1fr_auto_1fr] items-center">
+                <div className="justify-self-start">
+                  <ConfirmButton
+                    icon="exit"
+                    on="violet"
+                    ariaLabel="Esci dalla stanza"
+                    confirmLabel="Esco?"
+                    onConfirm={leave}
+                    className="!size-12 !min-h-12"
+                  />
+                </div>
+                <span className="font-display rounded-full bg-white/20 px-4 py-2 text-sm font-extrabold uppercase tracking-wide text-white">
+                  Stanza {room.code}
+                </span>
+                <div className="justify-self-end">
+                  <MuteButton on="violet" />
+                </div>
+              </header>
+
+              <div className="flex flex-col items-center gap-3 pt-2 text-center text-white">
+                <AvatarStack players={room.players} max={5} ring="var(--violet)" />
+                <h1 className="font-display text-[1.75rem] font-black leading-tight">{editing ? "Modifica profilo" : "Chi sei?"}</h1>
+                <p className="max-w-[30ch] text-base font-bold text-white/85">
+                  {editing
+                    ? "Cambiare profilo annulla il tuo “sono pronto”."
+                    : room.players.length > 1
+                      ? `${room.players.length - 1} ${room.players.length === 2 ? "giocatore ti aspetta" : "giocatori ti aspettano"} nella lobby.`
+                      : "Scegli nome e personaggio per entrare nella lobby."}
+                </p>
+              </div>
+
+              <form onSubmit={saveProfile} className="flex flex-1 flex-col gap-5">
+                <div className="rounded-[36px] bg-white/25 p-2">
+                  <div className="card !rounded-[30px] p-5">{profileFields}</div>
+                </div>
+
+                {frame.data.error && <Alert>{frame.data.error}</Alert>}
+
+                <div className="mt-auto flex flex-col items-center gap-3">
+                  <Button type="submit" tone="yellow" disabled={!nickname.trim() || !char.trim()}>
+                    {editing ? "Salva" : "Entra nella lobby"}
+                  </Button>
+                  {editing && (
+                    <SoftButton on="violet" onClick={() => setEditing(false)}>
+                      Annulla
+                    </SoftButton>
+                  )}
+                </div>
+              </form>
             </>
           )}
 
@@ -229,7 +323,7 @@ export default function Home() {
             <>
               <header className="grid grid-cols-[1fr_auto_1fr] items-center">
                 <div className="justify-self-start">
-                  <ConfirmButton icon="exit" ariaLabel="Esci dalla stanza" confirmLabel="Esco?" onConfirm={() => g.leaveRoom()} className="!size-12 !min-h-12" />
+                  <ConfirmButton icon="exit" ariaLabel="Esci dalla stanza" confirmLabel="Esco?" onConfirm={leave} className="!size-12 !min-h-12" />
                 </div>
                 <AvatarStack players={room.players} max={4} />
                 <div className="flex gap-1.5 justify-self-end">
@@ -278,41 +372,11 @@ export default function Home() {
                 (showForm ? (
                   <Card>
                     <h2 className="font-display mb-4 text-xl font-extrabold">{profileDone ? "Modifica profilo" : "Il tuo profilo"}</h2>
-                    <form onSubmit={saveProfile} className="flex flex-col gap-3">
-                      <label className="flex flex-col gap-1.5">
-                        <span className="px-1 text-sm font-extrabold text-ink-soft">Nickname</span>
-                        <input
-                          className="toy-input"
-                          value={nickname}
-                          onChange={(e) => setNickname(e.target.value)}
-                          maxLength={24}
-                          autoComplete="nickname"
-                          placeholder="Come ti chiamano"
-                          required
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1.5">
-                        <span className="px-1 text-sm font-extrabold text-ink-soft">Personaggio segreto</span>
-                        <input
-                          className="toy-input"
-                          value={char}
-                          onChange={(e) => setChar(e.target.value)}
-                          maxLength={60}
-                          autoComplete="off"
-                          placeholder="Reale o inventato"
-                          required
-                        />
-                      </label>
-                      <div className="mt-1 flex gap-2">
-                        {profileDone && (
-                          <Button type="button" size="md" tone="white" onClick={() => setEditing(false)}>
-                            Annulla
-                          </Button>
-                        )}
-                        <Button type="submit" size="md" tone="teal" disabled={!nickname.trim() || !char.trim()}>
-                          Salva
-                        </Button>
-                      </div>
+                    <form onSubmit={saveProfile} className="flex flex-col gap-4">
+                      {profileFields}
+                      <Button type="submit" size="md" tone="teal" disabled={!nickname.trim() || !char.trim()}>
+                        Salva
+                      </Button>
                     </form>
                   </Card>
                 ) : (
@@ -327,6 +391,9 @@ export default function Home() {
                           <span className="select-none tracking-[0.25em]">••••••</span>
                         )}
                       </p>
+                      {showChar && me?.decoy && (
+                        <p className="truncate text-sm font-bold text-ink-soft">Falso: {me.decoy}</p>
+                      )}
                     </div>
                     <IconButton
                       icon={showChar ? "eyeOff" : "eye"}
@@ -336,6 +403,40 @@ export default function Home() {
                     <IconButton icon="edit" label="Modifica profilo" onClick={startEdit} />
                   </Card>
                 ))}
+
+              {/* Nomi falsi: li sceglie l'host, gli altri vedono quanti sono */}
+              {frame.id === "lobby" && (
+                <Card className="flex flex-col gap-3 !p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="font-display text-lg font-extrabold">Nomi falsi</h2>
+                      <p className="text-sm font-bold text-ink-soft">Si mescolano ai personaggi veri per confondere le idee.</p>
+                    </div>
+                    {!frame.data.isHost && (
+                      <span className="font-display shrink-0 rounded-full bg-cream-deep px-4 py-2 text-2xl font-black">
+                        {room.decoyCount}
+                      </span>
+                    )}
+                  </div>
+                  {frame.data.isHost && (
+                    <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Quanti nomi falsi aggiungere">
+                      {Array.from({ length: room.maxDecoys + 1 }, (_, n) => (
+                        <Button
+                          key={n}
+                          size="md"
+                          tone={room.decoyCount === n ? "teal" : "white"}
+                          role="radio"
+                          aria-checked={room.decoyCount === n}
+                          className="!text-lg"
+                          onClick={() => room.decoyCount !== n && run(g.setDecoys(n))}
+                        >
+                          {n}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              )}
 
               {frame.id === "playing" && frame.data.isHost && (
                 <div className="flex justify-center">
@@ -407,10 +508,78 @@ export default function Home() {
         <RevealOverlay
           key={overlay.value.receivedAt}
           show={overlay.value}
+          decoys={room?.decoyCount ?? 0}
           className={screenClass(overlay.phase)}
           onDone={g.dismissCharacters}
         />
       )}
+    </div>
+  );
+}
+
+/** Nickname, personaggio e nome falso: usati nell'iscrizione e nella lobby dell'host. */
+function ProfileFields({
+  nickname,
+  character,
+  decoy,
+  onNickname,
+  onCharacter,
+  onDecoy,
+  decoyCount,
+}: {
+  nickname: string;
+  character: string;
+  decoy: string;
+  onNickname: (v: string) => void;
+  onCharacter: (v: string) => void;
+  onDecoy: (v: string) => void;
+  decoyCount: number;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-1.5">
+        <span className="px-1 text-sm font-extrabold text-ink-soft">Nickname</span>
+        <input
+          className="toy-input"
+          value={nickname}
+          onChange={(e) => onNickname(e.target.value)}
+          maxLength={24}
+          autoComplete="nickname"
+          placeholder="Come ti chiamano"
+          required
+        />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="px-1 text-sm font-extrabold text-ink-soft">Personaggio segreto</span>
+        <input
+          className="toy-input"
+          value={character}
+          onChange={(e) => onCharacter(e.target.value)}
+          maxLength={60}
+          autoComplete="off"
+          placeholder="Reale o inventato"
+          required
+        />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="flex items-baseline justify-between px-1 text-sm font-extrabold text-ink-soft">
+          Nome falso
+          <span className="font-bold">facoltativo</span>
+        </span>
+        <input
+          className="toy-input"
+          value={decoy}
+          onChange={(e) => onDecoy(e.target.value)}
+          maxLength={60}
+          autoComplete="off"
+          placeholder="Un personaggio per depistare"
+        />
+        <span className="px-1 text-sm font-bold leading-snug text-ink-soft">
+          {decoyCount > 0
+            ? `Potrebbe finire tra i ${decoyCount} nomi falsi della lista. Se non basta, ci pensa il gioco.`
+            : "In questa stanza i nomi falsi sono spenti, ma l'host può riaccenderli."}
+        </span>
+      </label>
     </div>
   );
 }
