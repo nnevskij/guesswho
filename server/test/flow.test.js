@@ -20,7 +20,7 @@ after(async () => {
 });
 
 const client = (auth) => {
-  const c = connect(url, { transports: ['websocket'], forceNew: true, auth });
+  const c = connect(`${url}/guesswho`, { transports: ['websocket'], forceNew: true, auth });
   clients.push(c);
   return c;
 };
@@ -140,7 +140,7 @@ test('riconnessione via auth.token e rimozione dopo il grace period', async () =
     b2.on('room:state', (s) => s.players.length === 1 && resolve(s));
   });
   assert.equal(st.hostId, joined.me.playerId);
-  assert.equal(server.manager.getSession(tokenA), null);
+  assert.equal(server.managers.guesswho.getSession(tokenA), null);
 });
 
 test('chi se ne va sblocca il "sono pronto" degli altri', async () => {
@@ -163,7 +163,7 @@ test('chi se ne va sblocca il "sono pronto" degli altri', async () => {
 
   // host resetta: torna in lobby
   await call(a, 'game:reset');
-  const info = await fetch(`${url}/rooms/${roomCode}`).then((r) => r.json());
+  const info = await fetch(`${url}/guesswho/rooms/${roomCode}`).then((r) => r.json());
   assert.deepEqual(info, { exists: true, phase: 'lobby', playerCount: 2, joinable: true });
   assert.equal((await call(b, 'game:reset')).error.code, 'NOT_HOST');
 });

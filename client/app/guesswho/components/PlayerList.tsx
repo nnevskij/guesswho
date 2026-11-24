@@ -1,7 +1,7 @@
 "use client";
 import type { RoomState } from "../hooks/useGameSocket";
-import { Icon } from "./Icon";
-import { Avatar, ConfirmButton, playerColor } from "./Toy";
+import { Icon } from "../../components/Icon";
+import { Avatar, ConfirmButton, playerColor } from "../../components/Toy";
 
 /** Righe a due tinte: a sinistra il numero del giocatore sul tono scuro, a destra gettone e nome. */
 export function PlayerList({

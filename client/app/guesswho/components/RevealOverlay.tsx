@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { CharactersShow } from "../hooks/useGameSocket";
-import { buzz, sfx } from "../lib/feedback";
-import { playerColor } from "./Toy";
+import { buzz, sfx } from "../../lib/feedback";
+import { playerColor } from "../../components/Toy";
 
 /**
  * Due fasi, con i tempi decisi dal server così tutti i telefoni vanno insieme:

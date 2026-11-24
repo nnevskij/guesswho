@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { buzz, sfx } from "../lib/feedback";
 
@@ -65,5 +66,36 @@ export function Button({
     >
       {children}
     </button>
+  );
+}
+
+/** Stesso tasto giocattolo, ma è un link: per andare a un'altra pagina, per esempio un gioco del catalogo. */
+export function ButtonLink({
+  href,
+  children,
+  tone = "yellow",
+  size = "lg",
+  className = "",
+}: {
+  href: string;
+  children: ReactNode;
+  tone?: ButtonTone;
+  size?: "lg" | "md" | "sm";
+  className?: string;
+}) {
+  const [face, edge, label] = TONES[tone];
+  return (
+    <Link
+      href={href}
+      data-size={size}
+      onClick={() => {
+        sfx.press();
+        buzz(12);
+      }}
+      className={`toy-btn font-display font-extrabold uppercase ${className}`}
+      style={{ ["--face" as string]: face, ["--edge" as string]: edge, ["--label" as string]: label }}
+    >
+      {children}
+    </Link>
   );
 }

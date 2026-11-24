@@ -9,7 +9,7 @@ if (config.corsOrigins === '*' && process.env.NODE_ENV === 'production') {
 }
 
 const address = await server.listen();
-console.log(`guesswho server in ascolto su ${address.address}:${address.port}`);
+console.log(`game server in ascolto su ${address.address}:${address.port}`);
 
 let shuttingDown = false;
 const shutdown = async (signal) => {

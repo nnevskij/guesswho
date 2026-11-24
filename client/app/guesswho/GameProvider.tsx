@@ -1,4 +1,4 @@
-// app/GameProvider.tsx
+// app/guesswho/GameProvider.tsx
 'use client';
 import { createContext, useContext } from 'react';
 import { useGameSocket } from './hooks/useGameSocket';

@@ -29,6 +29,8 @@ export function loadConfig(env = process.env) {
     // Lista personaggi: conto alla rovescia prima di mostrarla, poi resta visibile per questo tempo.
     revealCountdownMs: int(env.REVEAL_COUNTDOWN_MS, 5_000),
     revealDurationMs: int(env.REVEAL_DURATION_MS, 30_000),
-    rateLimit: { windowMs: 1000, max: int(env.RATE_LIMIT_PER_SEC, 20) },
+    // Funny Stories: quante domande può scegliere l'host e quanto lunghe possono essere domande e risposte.
+    funny: { questionsMin: 2, questionsMax: 12, questionMaxLength: 40, answerMaxLength: 120 },
+    rateLimit:{ windowMs: 1000, max: int(env.RATE_LIMIT_PER_SEC, 20) },
   };
 }

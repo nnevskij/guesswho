@@ -1,0 +1,2 @@
+# File di sistema macOS (client/ e server/ hanno ciascuno il proprio .gitignore)
+.DS_Store

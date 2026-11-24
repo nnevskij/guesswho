@@ -1,4 +1,4 @@
-import { GameError } from './errors.js';
+import { GameError } from '../errors.js';
 
 const createRateLimiter = ({ windowMs, max }) => {
   let windowStart = 0;
@@ -16,32 +16,30 @@ const createRateLimiter = ({ windowMs, max }) => {
 export const sessionPayload = (manager, room, player) => ({
   roomCode: room.code,
   token: player.token, // da salvare sul client (localStorage) per riconnettersi
-  me: manager.selfView(player),
+  me: manager.selfView(player, room),
   state: manager.publicState(room),
 });
 
 /**
- * Protocollo (client -> server, tutti con ack `(res) => ...`, res = { ok: true, ... } | { ok: false, error: { code, message } }):
+ * Eventi comuni a tutti i giochi, su un namespace Socket.IO (es. /guesswho).
+ * Client -> server, tutti con ack `(res) => ...`, res = { ok: true, ... } | { ok: false, error: { code, message } }:
  *   room:create                         -> { roomCode, token, me, state }
  *   room:join     { code }              -> { roomCode, token, me, state }
  *   room:leave
- *   player:profile { nickname, character, decoy? } -> { me }   (decoy = nome falso facoltativo)
- *   room:decoys   { count: 0..3 }         (solo host, in lobby: quanti nomi falsi aggiungere)
- *   player:ready  { ready: boolean }
- *   game:reread   { vote: boolean }
- *   game:reset                            (solo host: torna in lobby)
  *   player:kick   { playerId }            (solo host)
  *
  * Server -> client:
  *   room:state       stato pubblico della stanza (ad ogni cambiamento)
- *   characters:show  { reason: 'start' | 'reread', round, characters: string[], countdownMs, durationMs }
+ *   room:me          vista privata del giocatore (ad ogni cambiamento)
  *   session:resumed  { roomCode, token, me, state }  (riconnessione automatica via handshake auth.token)
  *   session:invalid  token non più valido: il client deve dimenticarlo
  *   session:replaced la stessa sessione è stata aperta da un'altra scheda
  *   room:removed     { reason: 'kicked' | 'timeout' | 'expired' }
+ *
+ * `registerGame(on)` aggiunge gli eventi propri del gioco; `on(event, fn)` riceve payload e token.
  */
-export function registerHandlers(io, manager, config) {
-  io.on('connection', (socket) => {
+export function registerLobbyHandlers(nsp, manager, config, registerGame) {
+  nsp.on('connection', (socket) => {
     const allow = createRateLimiter(config.rateLimit);
     socket.data.token = null;
 
@@ -65,13 +63,13 @@ export function registerHandlers(io, manager, config) {
         const reply = typeof ack === 'function' ? ack : () => {};
         if (!allow()) return reply({ ok: false, error: { code: 'RATE_LIMITED', message: 'Troppe richieste' } });
         try {
-          const result = fn(payload && typeof payload === 'object' ? payload : {});
+          const result = fn(payload && typeof payload === 'object' ? payload : {}, socket.data.token);
           reply({ ok: true, ...result });
         } catch (err) {
           if (err instanceof GameError) {
             reply({ ok: false, error: { code: err.code, message: err.message } });
           } else {
-            console.error(`[${event}]`, err);
+            console.error(`[${nsp.name} ${event}]`, err);
             reply({ ok: false, error: { code: 'INTERNAL', message: 'Errore interno' } });
           }
         }
@@ -84,7 +82,7 @@ export function registerHandlers(io, manager, config) {
       const resumed = manager.resume(authToken, socket.id);
       if (resumed) {
         const { room, player, previousSocketId } = resumed;
-        const old = previousSocketId && io.sockets.sockets.get(previousSocketId);
+        const old = previousSocketId && nsp.sockets.get(previousSocketId);
         if (old) {
           old.data.token = null; // così il suo disconnect non segna offline il giocatore
           old.emit('session:replaced');
@@ -120,15 +118,32 @@ export function registerHandlers(io, manager, config) {
       leaveCurrent();
     });
 
-    on('player:profile', (data) => ({ me: manager.setProfile(socket.data.token, data) }));
-    on('room:decoys', ({ count }) => void manager.setDecoys(socket.data.token, count));
-    on('player:ready',({ ready = true }) => void manager.setReady(socket.data.token, ready));
-    on('game:reread', ({ vote = true }) => void manager.voteReread(socket.data.token, vote));
-    on('game:reset', () => void manager.resetGame(socket.data.token));
-    on('player:kick', ({ playerId }) => void manager.kick(socket.data.token, playerId));
+    on('player:kick', ({ playerId }, token) => void manager.kick(token, playerId));
+
+    registerGame?.(on);
 
     socket.on('disconnect', () => {
       manager.disconnect(socket.data.token, socket.id);
     });
   });
 }
+
+/** Hook standard che collegano un manager al suo namespace. */
+export const namespaceHooks = (nsp, extra = {}) => {
+  const socketOf = (player) => {
+    const socket = player.socketId && nsp.sockets.get(player.socketId);
+    return socket && socket.data.token === player.token ? socket : null;
+  };
+  return {
+    onStateChange: (room, state) => nsp.to(room.code).emit('room:state', state),
+    onSelfChange: (_room, player, me) => socketOf(player)?.emit('room:me', me),
+    onPlayerRemoved: (room, player, reason) => {
+      const socket = socketOf(player);
+      if (!socket) return;
+      socket.data.token = null;
+      socket.leave(room.code);
+      if (reason !== 'left') socket.emit('room:removed', { reason });
+    },
+    ...extra,
+  };
+};

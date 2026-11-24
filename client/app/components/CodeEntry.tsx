@@ -3,6 +3,8 @@ import { useState } from "react";
 
 export const CODE_LENGTH = 5;
 const ALLOWED = /[^ABCDEFGHJKMNPQRSTUVWXYZ23456789]/g;
+/** Maiuscolo, solo caratteri ammessi, lunghezza massima del codice. */
+export const cleanCode = (raw: string) => raw.toUpperCase().replace(ALLOWED, "").slice(0, CODE_LENGTH);
 
 /**
  * Cinque gettoni per il codice stanza.
@@ -17,7 +19,7 @@ export function CodeEntry({ value, onChange, onSubmit }: { value: string; onChan
       <span className="sr-only">Codice stanza di {CODE_LENGTH} caratteri</span>
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value.toUpperCase().replace(ALLOWED, "").slice(0, CODE_LENGTH))}
+        onChange={(e) => onChange(cleanCode(e.target.value))}
         onKeyDown={(e) => e.key === "Enter" && value.length === CODE_LENGTH && onSubmit()}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}

@@ -1,3 +1,4 @@
+"use client";
 import { avatarColor } from "./Toy";
 
 /** Illustrazione della home: gettoni-personaggio misteriosi che galleggiano su un campo blu, con coriandoli. */

@@ -55,9 +55,48 @@
 /* ---------- Base ---------- */
 
 html {
+  --chrome-color: var(--cream);
   background: var(--cream);
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 300ms ease;
+}
+
+/*
+ * Campionatori per Safari 26 su iPhone: ignora theme-color e tinge le barre con lo sfondo
+ * degli elementi fissi a filo del bordo, larghi quasi tutto lo schermo e alti più di 10px.
+ * Lo sfondo c'è (Safari lo legge) ma non viene disegnato: background-clip: text su un div vuoto.
+ * Altrove sono alti 0. Il colore arriva da --chrome-color (lib/pageColor.ts).
+ */
+.chrome-sample {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  background-color: var(--chrome-color);
+  background-clip: text;
+  -webkit-background-clip: text;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  transition: none;
+}
+.chrome-sample-top {
+  top: 0;
+}
+.chrome-sample-bottom {
+  bottom: 0;
+}
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    .chrome-sample {
+      height: 11px;
+    }
+    /* Un pixel in più per due frame: Safari vede una geometria nuova e rilegge il colore */
+    html[data-chrome-refresh] .chrome-sample {
+      height: 12px;
+    }
+  }
 }
 
 body {

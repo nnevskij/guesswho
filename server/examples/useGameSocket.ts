@@ -69,7 +69,7 @@ export function useGameSocket() {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    const socket = io(SERVER_URL, {
+    const socket = io(`${SERVER_URL}/guesswho`, { // namespace del gioco
       transports: ['websocket'], // niente long-polling: meno latenza e overhead
       // Funzione: rivalutata ad ogni riconnessione, così il server riaggancia la sessione da solo.
       auth: (cb) => cb({ token: readToken() }),

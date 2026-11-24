@@ -1,23 +1,10 @@
 'use client';
-// Esempio di hook per il client Next.js (App Router). Copialo in es. `app/hooks/useGameSocket.ts`
-// e installa: npm i socket.io-client
+// Connessione al namespace /guesswho del server, usata dalle pagine di app/guesswho.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
+import { gameSocketUrl, tokenStore } from '../../lib/server';
 
-const SERVER_PORT = 3001;
-
-/**
- * In produzione usa NEXT_PUBLIC_SERVER_URL (es. il dominio Railway).
- * Senza la variabile, si collega allo stesso host da cui è aperta la pagina sulla porta 3001:
- * da `localhost` sul tuo computer, da `192.168.x.x` sul telefono di un amico in rete locale.
- */
-function serverUrl() {
-  const fromEnv = process.env.NEXT_PUBLIC_SERVER_URL;
-  if (fromEnv) return fromEnv;
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:${SERVER_PORT}`;
-}
-const TOKEN_KEY = 'guesswho:token';
+const token = tokenStore('guesswho');
 
 export type Phase = 'lobby' | 'playing';
 export interface PublicPlayer {
@@ -69,19 +56,8 @@ interface Session {
   state: RoomState;
 }
 
-const readToken = () => {
-  try {
-    return localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-};
-const writeToken = (t: string | null) => {
-  try {
-    if (t) localStorage.setItem(TOKEN_KEY, t);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {}
-};
+const readToken = token.read;
+const writeToken = token.write;
 
 export function useGameSocket() {
   const socketRef = useRef<Socket | null>(null);
@@ -94,7 +70,7 @@ export function useGameSocket() {
   const dismissCharacters = useCallback(() => setShown(null), []);
 
   useEffect(() => {
-    const socket = io(serverUrl(), {
+    const socket = io(gameSocketUrl('guesswho'), {
       transports: ['websocket'], // niente long-polling: meno latenza e overhead
       // Funzione: rivalutata ad ogni riconnessione, così il server riaggancia la sessione da solo.
       auth: (cb) => cb({ token: readToken() }),

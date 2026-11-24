@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { PublicPlayer } from "../hooks/useGameSocket";
 import { buzz, sfx, soundStore } from "../lib/feedback";
 import { Icon, type IconName } from "./Icon";
+
+/** Quanto serve ai componenti condivisi di un giocatore, in qualunque gioco. */
+export type LobbyPlayer = { id: string; nickname: string | null; connected: boolean };
 
 /** Colori dei giocatori: faccia, bordo 3D della stessa tinta e colore del testo sopra. */
 export const PLAYER_COLORS = [
@@ -51,7 +53,7 @@ export function Avatar({ name, index, size = 48, ring }: { name: string | null; 
 }
 
 /** Gettoni sovrapposti dei giocatori presenti. */
-export function AvatarStack({ players, max = 5, ring = "var(--cream)" }: { players: PublicPlayer[]; max?: number; ring?: string }) {
+export function AvatarStack({ players, max = 5, ring = "var(--cream)" }: { players: LobbyPlayer[]; max?: number; ring?: string }) {
   const shown = players.slice(0, max);
   const extra = players.length - shown.length;
   return (
