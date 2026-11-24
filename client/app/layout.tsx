@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito, Unbounded } from "next/font/google";
 import "./globals.css";
+import { shareMetadata } from "./lib/meta";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -17,6 +18,7 @@ const unbounded = Unbounded({
 export const metadata: Metadata = {
   title: { default: "ACpicchia!", template: "%s · ACpicchia!" },
   description: "Giochi da fare insieme, ognuno con il suo telefono.",
+  ...shareMetadata("ACpicchia!", "Giochi da fare nella stessa stanza, ognuno con il suo telefono."),
 };
 
 export const viewport: Viewport = {
