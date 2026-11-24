@@ -1,8 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Favicon di ACpicchia!: gettone giallo con il "!" del nome, su fondo viola (i colori del sito) -->
+  <!-- Favicon di Giochi Loschi: gettone giallo con la mascherina da ladro e un sorrisetto, su fondo viola (i colori del sito) -->
   <rect width="64" height="64" rx="15" fill="#6a5ae0"/>
-  <circle cx="32" cy="35" r="21" fill="#d9ad2c"/>
-  <circle cx="32" cy="30" r="21" fill="#fcd95c"/>
-  <rect x="28" y="15.5" width="8" height="18" rx="4" fill="#1d1b22"/>
-  <circle cx="32" cy="41" r="4.3" fill="#1d1b22"/>
+  <circle cx="32" cy="35" r="22" fill="#d9ad2c"/>
+  <circle cx="32" cy="30" r="22" fill="#fcd95c"/>
+  <path d="M8.5 25.5 Q32 15 55.5 25.5 L53.5 34.5 Q43 39.5 32 33.5 Q21 39.5 10.5 34.5 Z" fill="#1d1b22"/>
+  <ellipse cx="22.5" cy="28.5" rx="5.2" ry="3.6" fill="#fcd95c"/>
+  <ellipse cx="41.5" cy="28.5" rx="5.2" ry="3.6" fill="#fcd95c"/>
+  <path d="M23 42.5 Q33 47.5 42 40.5" fill="none" stroke="#1d1b22" stroke-width="3.6" stroke-linecap="round"/>
 </svg>

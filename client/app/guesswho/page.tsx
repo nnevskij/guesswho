@@ -524,7 +524,7 @@ function ProfileFields({
   );
 }
 
-/** Nome del gioco; la freccia riporta al catalogo di ACpicchia!. */
+/** Nome del gioco; la freccia riporta al catalogo di Giochi Loschi. */
 function Wordmark() {
   return (
     <Link href="/" className="-ml-1.5 flex items-center gap-1 rounded-2xl pr-2 text-white" aria-label="Guess Who, torna a tutti i giochi">

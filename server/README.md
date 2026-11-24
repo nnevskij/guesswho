@@ -1,4 +1,4 @@
-# ACpicchia! — game server
+# Giochi Loschi — game server (giochiloschi.com)
 
 Backend realtime per la raccolta di giochi: **Node.js 20+, Express 5, Socket.IO 4**, stato in memoria.
 Un solo server per tutti i giochi: ognuno ha il suo **namespace** Socket.IO (`/guesswho`, `/funnystories`, `/impostore`), con stanze, codici ed eventi separati.
@@ -35,7 +35,7 @@ npm test
 ## Deploy su Railway
 
 1. Crea un nuovo servizio dal repo e imposta **Root Directory = `server`**.
-2. Variabili: `CLIENT_ORIGIN=https://tuo-client.vercel.app` (più origini separate da virgola). `PORT` lo imposta Railway.
+2. Variabili: `CLIENT_ORIGIN=https://giochiloschi.com,https://www.giochiloschi.com` (le origini da cui si aprono i giochi, separate da virgola; aggiungi l'indirizzo `.vercel.app` se lo usi ancora). `PORT` lo imposta Railway.
 3. Genera un dominio pubblico. Nel client Next.js metti `NEXT_PUBLIC_SERVER_URL=https://<dominio>.up.railway.app` (senza namespace: lo aggiunge il client).
 
 `railway.json` imposta già start command, healthcheck su `/health` e **1 replica**. Lo stato è in memoria, quindi un redeploy chiude le partite in corso. Per scalare su più istanze servono `@socket.io/redis-adapter` e lo stato spostato su Redis.

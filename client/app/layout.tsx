@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito, Unbounded } from "next/font/google";
 import "./globals.css";
-import { shareMetadata } from "./lib/meta";
+import { SITE_URL, shareMetadata } from "./lib/meta";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -16,9 +16,12 @@ const unbounded = Unbounded({
 });
 
 export const metadata: Metadata = {
-  title: { default: "ACpicchia!", template: "%s · ACpicchia!" },
+  // Dominio pubblico: gli indirizzi assoluti (immagini delle anteprime dei link) partono da qui.
+  metadataBase: new URL(SITE_URL),
+  applicationName: "Giochi Loschi",
+  title: { default: "Giochi Loschi", template: "%s · Giochi Loschi" },
   description: "Giochi da fare insieme, ognuno con il suo telefono.",
-  ...shareMetadata("ACpicchia!", "Giochi da fare nella stessa stanza, ognuno con il suo telefono."),
+  ...shareMetadata("Giochi Loschi", "Giochi da fare nella stessa stanza, ognuno con il suo telefono."),
 };
 
 export const viewport: Viewport = {

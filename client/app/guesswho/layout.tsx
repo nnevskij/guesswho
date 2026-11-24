@@ -6,7 +6,7 @@ import { GameProvider } from "./GameProvider";
 export const metadata: Metadata = {
   title: "Guess Who",
   description: "Entra nella stanza, scegli un personaggio, premi pronto.",
-  ...shareMetadata("Guess Who · ACpicchia!", "Ti hanno invitato a Guess Who: scegli un personaggio segreto e indovina chi ha scelto cosa."),
+  ...shareMetadata("Guess Who · Giochi Loschi", "Ti hanno invitato a Guess Who: scegli un personaggio segreto e indovina chi ha scelto cosa."),
 };
 
 // La connessione al server si apre solo dentro questo gioco, non nel catalogo.

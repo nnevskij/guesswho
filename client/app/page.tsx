@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ButtonLink } from "./components/button";
 import { Icon } from "./components/Icon";
+import { Mascot } from "./components/Mascot";
 import { MysteryField } from "./components/MysteryField";
 import { MuteButton } from "./components/Toy";
 import { SheetsCover } from "./funnystories/SheetsCover";
@@ -23,7 +24,11 @@ export default function Catalogue() {
       <PageColor color={PAGE_COLORS.violet} />
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
         <header className="flex h-14 items-center justify-between">
-          <h1 className="font-display text-[1.75rem] font-black tracking-tight text-white">ACpicchia!</h1>
+          {/* Sotto i 400px il titolo si stringe, così non tocca il tasto dei suoni sui telefoni da 360px */}
+          <h1 className="font-display flex items-center gap-2 text-[1.5rem] font-black tracking-tight text-white min-[400px]:gap-2.5 min-[400px]:text-[1.75rem]">
+            <Mascot size={36} />
+            Giochi Loschi
+          </h1>
           <MuteButton on="violet" />
         </header>
 

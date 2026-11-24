@@ -5,11 +5,13 @@ import type { Metadata } from "next";
  * opengraph-image.tsx della stessa cartella; qui titolo e testo.
  * Next non unisce i campi openGraph tra layout padre e figlio (il figlio li sostituisce tutti),
  * quindi ogni pagina li passa interi da qui.
- * L'URL assoluto dell'immagine su Vercel lo ricava Next dal dominio di produzione.
+ * L'URL assoluto dell'immagine parte da SITE_URL (metadataBase in layout.tsx).
  */
+export const SITE_URL = "https://giochiloschi.com";
+
 export function shareMetadata(title: string, description: string): Pick<Metadata, "openGraph" | "twitter"> {
   return {
-    openGraph: { title, description, siteName: "ACpicchia!", locale: "it_IT", type: "website" },
+    openGraph: { title, description, siteName: "Giochi Loschi", locale: "it_IT", type: "website" },
     twitter: { card: "summary_large_image", title, description },
   };
 }
