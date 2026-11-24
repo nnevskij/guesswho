@@ -17,6 +17,17 @@ export const shuffle = (arr) => {
 /** Confronto senza maiuscole/minuscole, per nickname e nomi. */
 export const key = (name) => name.toLocaleLowerCase('it');
 
+/**
+ * Chiave per confrontare nomi e parole: senza maiuscole, accenti, punteggiatura e spazi doppi.
+ * "Napoléone", "napoleone " e "Napoleone!" sono lo stesso; "Napoleone Bonaparte" no.
+ */
+export const nameKey = (name) =>
+  key(name)
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+
 const noop = () => {};
 
 /**

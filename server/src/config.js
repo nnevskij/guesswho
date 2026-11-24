@@ -31,6 +31,8 @@ export function loadConfig(env = process.env) {
     revealDurationMs: int(env.REVEAL_DURATION_MS, 30_000),
     // Funny Stories: quante domande può scegliere l'host e quanto lunghe possono essere domande e risposte.
     funny: { questionsMin: 2, questionsMax: 12, questionMaxLength: 40, answerMaxLength: 120 },
+    // Impostore: servono almeno 3 giocatori; fino a 3 impostori (ma sempre 2 innocenti per impostore).
+    impostore: { minPlayers: 3, maxImpostors: 3, wordMaxLength: 40 },
     rateLimit:{ windowMs: 1000, max: int(env.RATE_LIMIT_PER_SEC, 20) },
   };
 }

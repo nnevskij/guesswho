@@ -1,19 +1,8 @@
 import { GameError, cleanText } from '../../errors.js';
-import { LOBBY, LobbyManager, key, shuffle } from '../../core/lobby.js';
+import { LOBBY, LobbyManager, nameKey, shuffle } from '../../core/lobby.js';
 import { FALLBACK_DECOYS } from './decoys.js';
 
 export const PHASE = Object.freeze({ LOBBY, PLAYING: 'playing' });
-
-/**
- * Chiave per confrontare i nomi dei personaggi: senza maiuscole, accenti, punteggiatura e spazi doppi.
- * "Napoléone", "napoleone " e "Napoleone!" sono lo stesso; "Napoleone Bonaparte" no.
- */
-export const nameKey = (name) =>
-  key(name)
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
 
 /**
  * Guess Who: ognuno scrive un personaggio segreto, quando tutti sono pronti la lista (mescolata,

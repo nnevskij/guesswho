@@ -6,4 +6,5 @@ export const PAGE_COLORS = {
   cream: "#f6f4ee",
   violet: "#6a5ae0",
   orange: "#e8691f",
+  coral: "#e5625a",
 } as const;

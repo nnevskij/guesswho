@@ -72,7 +72,18 @@ export async function ogImage({
           >
             {eyebrow}
           </div>
-          <div style={{ display: "flex", marginTop: 28, color: "#fff", fontSize: 92, fontWeight: 900, lineHeight: 1.02, letterSpacing: -2 }}>
+          {/* Una parola lunga (es. "Impostore") a 92px uscirebbe dalla colonna: si rimpicciolisce */}
+          <div
+            style={{
+              display: "flex",
+              marginTop: 28,
+              color: "#fff",
+              fontSize: Math.max(...title.split(" ").map((w) => w.length)) >= 9 ? 76 : 92,
+              fontWeight: 900,
+              lineHeight: 1.02,
+              letterSpacing: -2,
+            }}
+          >
             {title}
           </div>
           <div style={{ display: "flex", marginTop: 26, color: "rgba(255,255,255,0.9)", fontSize: 34, lineHeight: 1.3, fontFamily: "Nunito", fontWeight: 700 }}>
@@ -221,6 +232,53 @@ export function CatalogueArt() {
       </div>
       <div style={{ position: "absolute", left: 40, top: 430, width: 26, height: 26, borderRadius: 999, background: "#fcd95c" }} />
       <div style={{ position: "absolute", left: 420, top: 90, width: 22, height: 22, borderRadius: 999, background: "#fff" }} />
+    </>
+  );
+}
+
+/** Carte con la parola segreta, una scura con il "?", come l'illustrazione di Impostore. */
+export function CardsArt() {
+  const cards = [
+    { x: 60, y: 160, r: -14, odd: false },
+    { x: 180, y: 120, r: -4, odd: false },
+    { x: 300, y: 150, r: 7, odd: true },
+    { x: 410, y: 200, r: 16, odd: false },
+  ];
+  return (
+    <>
+      {cards.map((c, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            left: c.x,
+            top: c.y,
+            width: 130,
+            height: 186,
+            borderRadius: 24,
+            background: c.odd ? INK : "#fff",
+            boxShadow: `0 14px 0 ${c.odd ? "#000" : "#b94740"}`,
+            transform: `rotate(${c.r}deg)`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontSize: 110,
+            fontWeight: 900,
+          }}
+        >
+          {/* Satori non accetta figli null: due rami separati */}
+          {c.odd ? (
+            <div style={{ display: "flex" }}>?</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ width: 90, height: 16, borderRadius: 999, background: "#e5625a", marginBottom: 16 }} />
+              <div style={{ width: 60, height: 14, borderRadius: 999, background: "#d9d6cd" }} />
+            </div>
+          )}
+        </div>
+      ))}
     </>
   );
 }

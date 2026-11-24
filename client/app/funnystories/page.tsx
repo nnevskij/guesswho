@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "../components/button";
 import { CODE_LENGTH, CodeEntry, cleanCode } from "../components/CodeEntry";
 import { Icon } from "../components/Icon";
+import { EntryHeader, GameHeader as SharedGameHeader, GameWordmark, NicknameField, RoomCodeCard } from "../components/Lobby";
 import { Alert, Avatar, AvatarStack, Card, ConfirmButton, IconButton, MuteButton, SoftButton, VoteDots } from "../components/Toy";
 import { buzz, sfx } from "../lib/feedback";
 import { screenClass, shareInvite, useScreen } from "../lib/screens";
@@ -232,29 +232,7 @@ export default function FunnyStories() {
             <>
               <GameHeader room={room} onLeave={leave} onShare={() => share(room.code)} />
 
-              <button
-                type="button"
-                onClick={() => share(room.code)}
-                className="relative flex flex-col items-center gap-1 rounded-[30px] border-[2.5px] bg-mint px-5 pb-5 pt-4 text-center transition-transform active:scale-[0.98]"
-                style={{ borderColor: "var(--mint-edge)" }}
-                aria-label={`Codice stanza ${room.code.split("").join(" ")}, tocca per condividere`}
-              >
-                <span
-                  className="font-display rounded-full px-4 py-1.5 text-sm font-extrabold uppercase tracking-wide text-white"
-                  style={{ background: "var(--teal)", boxShadow: "0 0 0 3px color-mix(in oklab, var(--teal) 55%, white)" }}
-                >
-                  Stanza
-                </span>
-                <span className="font-display shadow-text mt-2 text-[3.4rem] font-black leading-none tracking-[0.04em]" style={{ color: "var(--teal-edge)" }}>
-                  {room.code}
-                </span>
-                <span className="font-display mt-2 text-[11px] font-extrabold uppercase tracking-[0.18em]" style={{ color: "var(--teal)" }}>
-                  Tocca per condividere
-                </span>
-                <span className="mt-1 h-6 text-base font-bold" style={{ color: "var(--teal-edge)" }} aria-live="polite">
-                  {flash ?? "Detta il codice agli altri"}
-                </span>
-              </button>
+              <RoomCodeCard code={room.code} note={flash ?? "Detta il codice agli altri"} onShare={() => share(room.code)} />
 
               <section className="flex flex-col gap-3">
                 <div className="flex items-baseline justify-between px-1">
@@ -342,59 +320,10 @@ export default function FunnyStories() {
 
 // ---------- Pezzi delle schermate ----------
 
-function Wordmark() {
-  return (
-    <Link href="/" className="-ml-1.5 flex items-center gap-1 rounded-2xl pr-2 text-white" aria-label="Funny Stories, torna a tutti i giochi">
-      <Icon name="back" size={26} strokeWidth={3.2} className="opacity-80" />
-      <h1 className="font-display text-[1.75rem] font-black lowercase tracking-tight">funny stories</h1>
-    </Link>
-  );
-}
+const Wordmark = () => <GameWordmark title="funny stories" />;
 
-function EntryHeader({ code, onLeave }: { code: string; onLeave: () => void }) {
-  return (
-    <header className="grid grid-cols-[1fr_auto_1fr] items-center">
-      <div className="justify-self-start">
-        <ConfirmButton icon="exit" on="violet" ariaLabel="Esci dalla stanza" confirmLabel="Esco?" onConfirm={onLeave} className="!size-12 !min-h-12" />
-      </div>
-      <span className="font-display rounded-full bg-white/20 px-4 py-2 text-sm font-extrabold uppercase tracking-wide text-white">Stanza {code}</span>
-      <div className="justify-self-end">
-        <MuteButton on="violet" />
-      </div>
-    </header>
-  );
-}
-
-function GameHeader({ room, onLeave, onShare, center }: { room: FsRoom; onLeave: () => void; onShare?: () => void; center?: React.ReactNode }) {
-  return (
-    <header className="grid grid-cols-[1fr_auto_1fr] items-center">
-      <div className="justify-self-start">
-        <ConfirmButton icon="exit" ariaLabel="Esci dalla stanza" confirmLabel="Esco?" onConfirm={onLeave} className="!size-12 !min-h-12" />
-      </div>
-      {center ?? <AvatarStack players={room.players} max={4} />}
-      <div className="flex gap-1.5 justify-self-end">
-        {onShare && <IconButton icon="share" label="Condividi il codice" onClick={onShare} />}
-        <MuteButton />
-      </div>
-    </header>
-  );
-}
-
-function NicknameField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="px-1 text-sm font-extrabold text-ink-soft">Nickname</span>
-      <input
-        className="toy-input"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        maxLength={24}
-        autoComplete="nickname"
-        placeholder="Come ti chiamano"
-        required
-      />
-    </label>
-  );
+function GameHeader({ room, ...rest }: { room: FsRoom; onLeave: () => void; onShare?: () => void; center?: React.ReactNode }) {
+  return <SharedGameHeader players={room.players} {...rest} />;
 }
 
 /** Righe giocatore: gettone, nome, corona per l'host, stato del turno durante la scrittura. */

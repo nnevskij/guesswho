@@ -29,4 +29,12 @@ export const GAMES: Game[] = [
     players: "2–20 giocatori",
     minutes: "10–20 min",
   },
+  {
+    slug: "impostore",
+    title: "Impostore",
+    pitch:
+      "Tutti hanno la stessa parola segreta, tranne l'impostore. Un indizio a testa a voce, poi votate sul telefono chi vi sembra fuori posto. Due modalità, punti a ogni round.",
+    players: "3–20 giocatori",
+    minutes: "5 min a round",
+  },
 ];

@@ -1,7 +1,7 @@
 # ACpicchia! — game server
 
 Backend realtime per la raccolta di giochi: **Node.js 20+, Express 5, Socket.IO 4**, stato in memoria.
-Un solo server per tutti i giochi: ognuno ha il suo **namespace** Socket.IO (`/guesswho`, `/funnystories`), con stanze, codici ed eventi separati.
+Un solo server per tutti i giochi: ognuno ha il suo **namespace** Socket.IO (`/guesswho`, `/funnystories`, `/impostore`), con stanze, codici ed eventi separati.
 
 ## Perché queste tecnologie
 
@@ -19,6 +19,7 @@ src/
   core/handlers.js       eventi comuni (room:create/join/leave, player:kick, sessioni)
   games/guesswho/        GuessWhoManager + eventi + nomi falsi di riserva
   games/funnystories/    FunnyStoriesManager + eventi
+  games/impostore/       ImpostoreManager + eventi + parole per categoria (words.js)
 ```
 
 **Aggiungere un gioco:** una classe che estende `LobbyManager` (ridefinisce `initRoom`, `initPlayer`, `evaluate`, `publicState`, `selfView`), una funzione che registra i suoi eventi, e una voce in `GAMES` dentro `app.js`.
@@ -64,9 +65,9 @@ Server → client:
 | `session:invalid` / `session:replaced` | – |
 | `room:removed` | `{ reason: 'kicked' \| 'timeout' \| 'expired' }` |
 
-Codici di errore: `ROOM_NOT_FOUND`, `ROOM_FULL`, `GAME_IN_PROGRESS`, `WRONG_PHASE`, `NOT_IN_ROOM`, `NOT_PLAYING`, `PROFILE_INCOMPLETE`, `NICKNAME_TAKEN`, `CHARACTER_TAKEN`, `NOT_HOST`, `NOT_ENOUGH_PLAYERS`, `ALREADY_ANSWERED`, `PLAYER_NOT_FOUND`, `INVALID_INPUT`, `RATE_LIMITED`, `INTERNAL`.
+Codici di errore: `ROOM_NOT_FOUND`, `ROOM_FULL`, `GAME_IN_PROGRESS`, `WRONG_PHASE`, `NOT_IN_ROOM`, `NOT_PLAYING`, `PROFILE_INCOMPLETE`, `NICKNAME_TAKEN`, `CHARACTER_TAKEN`, `NOT_HOST`, `NOT_ENOUGH_PLAYERS`, `ALREADY_ANSWERED`, `NOT_ACCUSED`, `PLAYER_NOT_FOUND`, `INVALID_INPUT`, `RATE_LIMITED`, `INTERNAL`.
 
-HTTP: `GET /health` → `{ status, rooms: { guesswho, funnystories }, sockets, uptime }`; `GET /:game/rooms/:code` → `{ exists, joinable, phase, playerCount }`.
+HTTP: `GET /health` → `{ status, rooms: { guesswho, funnystories, impostore }, sockets, uptime }`; `GET /:game/rooms/:code` → `{ exists, joinable, phase, playerCount }`.
 
 ## Guess Who (`/guesswho`)
 
@@ -113,3 +114,34 @@ lobby ──game:start (host)──▶ writing ──(tutti hanno risposto all'u
 | `game:skip` | – (solo host: salta chi è disconnesso) |
 | `story:show` | `{ index }` (solo host, in lettura) |
 | `game:reset` | – (solo host) |
+
+## Impostore (`/impostore`)
+
+Tutti ricevono la stessa parola segreta, tranne gli impostori (da 1 a 3, mai più di uno ogni due innocenti). Gli indizi si danno a voce; il telefono mostra la parola, chi inizia (sempre un innocente) e raccoglie il voto. Due modalità, scelte dall'host e fissate all'avvio di ogni round:
+
+- **classica**: l'impostore sa di esserlo e non conosce la parola. Se viene scoperto ha un'ultima chance (`guess`): se indovina la parola vince lui.
+- **parola simile**: l'impostore riceve una parola vicina (le coppie in `games/impostore/words.js`) e non sa di essere l'impostore.
+
+```
+lobby ──game:start──▶ clues ──game:vote (host)──▶ voting ──(hanno votato tutti i connessi)──▶ result
+                        ▲                            │ classica, accusato un impostore ──▶ guess ──▶ result
+                        └──────── game:start (host): round successivo, da result ─────────────────────┘
+game:reset (host) riporta in lobby da qualunque fase e azzera la classifica.
+```
+
+- Voto: si vota un altro giocatore e si può cambiare idea finché non hanno votato tutti. Pareggio = nessun accusato.
+- Punti: impostore scoperto → +1 a ogni innocente e +1 a chi l'ha votato; impostore che indovina → +3 agli impostori; innocente accusato o pareggio → +2 agli impostori.
+- L'host può scrivere la parola del prossimo round (e la simile); in quel round non può essere impostore. Altrimenti si pesca dalle categorie scelte, senza ripetere parole finché non sono finite.
+- Parole e ruoli non passano mai in `room:state`: ognuno riceve la sua in `room:me` (`word`, `isImpostor` solo nella classica, `wroteWord`); tutto si rivela in `round.reveal` a fine round.
+
+| Evento | Payload |
+|---|---|
+| `player:profile` | `{ nickname }` → `{ me }` |
+| `room:settings` | `{ mode?: 'classic' \| 'similar', impostorCount?, categories? }` (solo host, tra un round e l'altro) |
+| `room:customWord` | `{ word, similar? }`, `word` vuota cancella (solo host) |
+| `game:start` | – (solo host: nuovo round) |
+| `game:vote` | – (solo host: dagli indizi al voto) |
+| `game:castVote` | `{ targetId }` |
+| `game:guess` | `{ word }` (solo l'impostore scoperto, classica) |
+| `game:skipGuess` | – (solo host, se l'accusato è offline) |
+| `game:reset` | – (solo host: lobby e classifica azzerata) |

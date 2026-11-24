@@ -5,6 +5,7 @@ import { Icon } from "./components/Icon";
 import { MysteryField } from "./components/MysteryField";
 import { MuteButton } from "./components/Toy";
 import { SheetsCover } from "./funnystories/SheetsCover";
+import { CardsCover } from "./impostore/CardsCover";
 import { GAMES } from "./games";
 import { PAGE_COLORS } from "./lib/colors";
 import { PageColor } from "./lib/pageColor";
@@ -13,6 +14,7 @@ import { PageColor } from "./lib/pageColor";
 const COVERS: Record<string, ReactNode> = {
   guesswho: <MysteryField />,
   funnystories: <SheetsCover />,
+  impostore: <CardsCover />,
 };
 
 export default function Catalogue() {

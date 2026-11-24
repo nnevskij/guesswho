@@ -6,6 +6,8 @@ import { namespaceHooks, registerLobbyHandlers } from './core/handlers.js';
 import { FunnyStoriesManager } from './games/funnystories/rooms.js';
 import { registerFunnyStories } from './games/funnystories/handlers.js';
 import { GuessWhoManager } from './games/guesswho/rooms.js';
+import { ImpostoreManager } from './games/impostore/rooms.js';
+import { registerImpostore } from './games/impostore/handlers.js';
 import { registerGuessWho } from './games/guesswho/handlers.js';
 
 /**
@@ -23,6 +25,10 @@ const GAMES = {
   funnystories: {
     Manager: FunnyStoriesManager,
     register: registerFunnyStories,
+  },
+  impostore: {
+    Manager: ImpostoreManager,
+    register: registerImpostore,
   },
 };
 
