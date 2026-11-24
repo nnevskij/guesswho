@@ -5,6 +5,17 @@ import { FALLBACK_DECOYS } from './decoys.js';
 export const PHASE = Object.freeze({ LOBBY, PLAYING: 'playing' });
 
 /**
+ * Chiave per confrontare i nomi dei personaggi: senza maiuscole, accenti, punteggiatura e spazi doppi.
+ * "Napoléone", "napoleone " e "Napoleone!" sono lo stesso; "Napoleone Bonaparte" no.
+ */
+export const nameKey = (name) =>
+  key(name)
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+
+/**
  * Guess Who: ognuno scrive un personaggio segreto, quando tutti sono pronti la lista (mescolata,
  * con qualche nome falso) compare su tutti i telefoni. Si può rileggere se tutti votano.
  *
@@ -44,10 +55,19 @@ export class GuessWhoManager extends LobbyManager {
       decoy == null || (typeof decoy === 'string' && !decoy.trim())
         ? null
         : cleanText(decoy, { field: 'nome falso', max: this.opts.characterMaxLength });
-    if (fake && key(fake) === key(char)) {
+    if (fake && nameKey(fake) === nameKey(char)) {
       throw new GameError('INVALID_INPUT', 'Il nome falso deve essere diverso dal tuo personaggio');
     }
-    player.nickname = this.cleanNickname(room, player, nick);
+    const uniqueNick = this.cleanNickname(room, player, nick);
+    // Ogni personaggio una volta sola. Il rifiuto dice che qualcuno l'ha già scelto, ma non chi:
+    // alla partenza la lista diventa comunque pubblica, e i tentativi ripetuti li frena il rate limit.
+    const charKey = nameKey(char);
+    for (const p of room.players.values()) {
+      if (p.id !== player.id && p.character && nameKey(p.character) === charKey) {
+        throw new GameError('CHARACTER_TAKEN', "Questo personaggio l'ha già scelto qualcun altro: scegline un altro");
+      }
+    }
+    player.nickname = uniqueNick;
     player.character = char;
     player.decoy = fake;
     player.ready = false; // modificare il profilo annulla il "sono pronto"
@@ -140,11 +160,11 @@ export class GuessWhoManager extends LobbyManager {
    */
   #pickDecoys(count, players) {
     if (count <= 0) return [];
-    const taken = new Set(players.map((p) => key(p.character)));
+    const taken = new Set(players.map((p) => nameKey(p.character)));
     const picked = [];
     const take = (name) => {
-      if (picked.length >= count || taken.has(key(name))) return;
-      taken.add(key(name));
+      if (picked.length >= count || taken.has(nameKey(name))) return;
+      taken.add(nameKey(name));
       picked.push(name);
     };
     for (const name of shuffle(players.map((p) => p.decoy).filter(Boolean))) take(name);

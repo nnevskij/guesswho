@@ -60,6 +60,16 @@ test('flusso completo: crea, entra, profilo, pronto, rileggi, riconnessione', as
   assert.equal(dup.error.code, 'NICKNAME_TAKEN');
   // il falso di Bruno coincide con il personaggio vero di Carla: va scartato
   await call(b, 'player:profile', { nickname: 'Bruno', character: 'Topolino', decoy: 'cleopatra' });
+
+  // personaggio già scelto da un altro: rifiutato anche con maiuscole, accenti e punteggiatura diversi
+  for (const taken of ['napoleone', ' Napoléone! ', 'TOPOLINO']) {
+    const res = await call(c, 'player:profile', { nickname: 'Carla', character: taken });
+    assert.equal(res.error?.code, 'CHARACTER_TAKEN', `"${taken}" doveva risultare già scelto`);
+  }
+  // un nome solo simile è un altro personaggio; e chi rimodifica il proprio profilo può tenere il suo
+  assert.equal((await call(c, 'player:profile', { nickname: 'Carla', character: 'Napoleone Bonaparte' })).ok, true);
+  assert.equal((await call(a, 'player:profile', { nickname: 'Anna', character: 'Napoleone', decoy: 'Garibaldi' })).ok, true);
+
   await call(c, 'player:profile', { nickname: '  Carla  ', character: 'Cleopatra', decoy: '' });
 
   // reread non permesso in lobby

@@ -64,7 +64,7 @@ Server → client:
 | `session:invalid` / `session:replaced` | – |
 | `room:removed` | `{ reason: 'kicked' \| 'timeout' \| 'expired' }` |
 
-Codici di errore: `ROOM_NOT_FOUND`, `ROOM_FULL`, `GAME_IN_PROGRESS`, `WRONG_PHASE`, `NOT_IN_ROOM`, `NOT_PLAYING`, `PROFILE_INCOMPLETE`, `NICKNAME_TAKEN`, `NOT_HOST`, `NOT_ENOUGH_PLAYERS`, `ALREADY_ANSWERED`, `PLAYER_NOT_FOUND`, `INVALID_INPUT`, `RATE_LIMITED`, `INTERNAL`.
+Codici di errore: `ROOM_NOT_FOUND`, `ROOM_FULL`, `GAME_IN_PROGRESS`, `WRONG_PHASE`, `NOT_IN_ROOM`, `NOT_PLAYING`, `PROFILE_INCOMPLETE`, `NICKNAME_TAKEN`, `CHARACTER_TAKEN`, `NOT_HOST`, `NOT_ENOUGH_PLAYERS`, `ALREADY_ANSWERED`, `PLAYER_NOT_FOUND`, `INVALID_INPUT`, `RATE_LIMITED`, `INTERNAL`.
 
 HTTP: `GET /health` → `{ status, rooms: { guesswho, funnystories }, sockets, uptime }`; `GET /:game/rooms/:code` → `{ exists, joinable, phase, playerCount }`.
 
@@ -77,6 +77,7 @@ lobby ──(tutti "sono pronto", almeno MIN_PLAYERS)──▶ playing
 ```
 
 - Per dirsi pronti servono nickname e personaggio. Modificare il profilo annulla il "pronto".
+- Ogni personaggio una volta sola per stanza (`CHARACTER_TAKEN`): il confronto ignora maiuscole, accenti, punteggiatura e spazi doppi.
 - All'avvio i personaggi vengono mescolati **una volta sola**: ogni rilettura mostra la stessa lista, **senza gli autori**. I personaggi non passano mai in `room:state`: arrivano solo con `characters:show`.
 - **Nomi falsi:** alla partenza si aggiungono da 0 a 3 nomi falsi (default 2, `DEFAULT_DECOYS`; li sceglie l'host). Prima quelli scritti dai giocatori nel profilo, poi quelli di riserva in `games/guesswho/decoys.js`. Mai rivelati.
 
