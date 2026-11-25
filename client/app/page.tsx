@@ -12,6 +12,7 @@ import { PAGE_COLORS } from "./lib/colors";
 import { PageColor } from "./lib/pageColor";
 import { SITE_NAME, SITE_URL, jsonLd } from "./lib/meta";
 import { RULES, SITE_FAQ } from "./regole/content";
+import Credits from "./components/Credits";
 
 /** Copertina di ogni gioco nel catalogo. */
 const COVERS: Record<string, ReactNode> = {
@@ -116,12 +117,13 @@ export default function Catalogue() {
             Domande frequenti
           </h2>
           {SITE_FAQ.map((f) => (
-            <div key={f.q} className="rounded-[24px] bg-white/15 px-5 py-4">
+            <div key={f.q} className="rounded-3xl bg-white/15 px-5 py-4">
               <h3 className="font-display text-base font-extrabold">{f.q}</h3>
               <p className="mt-1 text-base font-bold leading-snug text-white/85">{f.a}</p>
             </div>
           ))}
         </section>
+        <Credits />
       </div>
     </div>
   );
